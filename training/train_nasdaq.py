@@ -101,20 +101,21 @@ class ReRaLSTM:
 
     def train(self):
         global df
-        model = HGAT(self.batch_size).to(self.device)
+        model = HGAT(self.batch_size).to(self.device)  # Ensure model is on the correct device
         for p in model.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
             else:
                 nn.init.uniform_(p)
+        
         optimizer_hgat = optim.Adam(model.parameters(), lr=self.parameters['lr'], weight_decay=5e-4)
         inci_mat = np.load('nasdaq.npy')
         inci_sparse = sparse.coo_matrix(inci_mat)
         incidence_edge = utils.from_scipy_sparse_matrix(inci_sparse)
         hyp_input = incidence_edge[0].to(self.device)
         batch_offsets = np.arange(start=0, stop=self.valid_index, dtype=int)
-        hyp_input = hyp_input.to(self.device) 
-
+        hyp_input = hyp_input.to(self.device)
+    
         for i in range(self.epochs):
             t1 = time()
             np.random.shuffle(batch_offsets)
@@ -122,26 +123,39 @@ class ReRaLSTM:
             model.train()
             for j in tqdm(range(self.valid_index - self.parameters['seq'] - self.steps + 1)):
                 emb_batch, mask_batch, price_batch, gt_batch = self.get_batch(batch_offsets[j])
+                
+                # Move data to device
                 emb_batch = torch.FloatTensor(emb_batch).to(self.device)
                 price_batch = torch.FloatTensor(price_batch).to(self.device)
                 gt_batch = torch.FloatTensor(gt_batch).to(self.device)
                 mask_batch = torch.FloatTensor(mask_batch).to(self.device)
+                
                 optimizer_hgat.zero_grad()
+                
+                # Forward pass
                 output = model(emb_batch, hyp_input)
-                cur_loss, cur_reg_loss, cur_rank_loss, curr_rr_train = trr_loss_mse_rank(output.reshape((1026, 1)), 
-                                                                                        price_batch, gt_batch, mask_batch, 
-                                                                                        self.parameters['alpha'], self.batch_size)
+                
+                cur_loss, cur_reg_loss, cur_rank_loss, curr_rr_train = trr_loss_mse_rank(
+                    output.reshape((1026, 1)), 
+                    price_batch, 
+                    gt_batch, 
+                    mask_batch, 
+                    self.parameters['alpha'], 
+                    self.batch_size
+                )
+                
                 tra_loss += cur_loss.item()
                 tra_reg_loss += cur_reg_loss.item()
                 tra_rank_loss += cur_rank_loss.item()
+                
                 cur_loss.backward()
                 optimizer_hgat.step()
-
+    
             print('Train Loss:',
                   tra_loss / (self.valid_index - self.parameters['seq'] - self.steps + 1),
                   tra_reg_loss / (self.valid_index - self.parameters['seq'] - self.steps + 1),
                   tra_rank_loss / (self.valid_index - self.parameters['seq'] - self.steps + 1))
-
+    
             with torch.no_grad():
                 # Test on validation set
                 cur_valid_pred = np.zeros([len(self.tickers), self.test_index - self.valid_index], dtype=float)
@@ -152,15 +166,24 @@ class ReRaLSTM:
                 for cur_offset in range(self.valid_index - self.parameters['seq'] - self.steps + 1,
                                         self.test_index - self.parameters['seq'] - self.steps + 1):
                     emb_batch, mask_batch, price_batch, gt_batch = self.get_batch(cur_offset)
+                    
+                    # Move data to device
                     emb_batch = torch.FloatTensor(emb_batch).to(self.device)
                     mask_batch = torch.FloatTensor(mask_batch).to(self.device)
                     price_batch = torch.FloatTensor(price_batch).to(self.device)
                     gt_batch = torch.FloatTensor(gt_batch).to(self.device)
+                    
                     output_val = model(emb_batch, hyp_input)
-                    cur_loss, cur_reg_loss, cur_rank_loss, cur_rr = trr_loss_mse_rank(output_val, 
-                                                                                        price_batch, gt_batch, 
-                                                                                        mask_batch, self.parameters['alpha'], 
-                                                                                        self.batch_size)
+                    
+                    cur_loss, cur_reg_loss, cur_rank_loss, cur_rr = trr_loss_mse_rank(
+                        output_val, 
+                        price_batch, 
+                        gt_batch, 
+                        mask_batch, 
+                        self.parameters['alpha'], 
+                        self.batch_size
+                    )
+                    
                     cur_rr = cur_rr.detach().cpu().numpy().reshape((1026, 1))
                     val_loss += cur_loss.detach().cpu().item()
                     val_reg_loss += cur_reg_loss.detach().cpu().item()
@@ -177,7 +200,7 @@ class ReRaLSTM:
                       val_rank_loss / (self.test_index - self.valid_index))
                 cur_valid_perf = evaluate(cur_valid_pred, cur_valid_gt, cur_valid_mask)
                 print('\t Valid performance:', cur_valid_perf)
-
+    
                 # Test on testing set
                 cur_test_pred = np.zeros([len(self.tickers), self.trade_dates - self.test_index], dtype=float)
                 cur_test_gt = np.zeros([len(self.tickers), self.trade_dates - self.test_index], dtype=float)
@@ -187,15 +210,24 @@ class ReRaLSTM:
                 for cur_offset in range(self.test_index - self.parameters['seq'] - self.steps + 1,
                                         self.trade_dates - self.parameters['seq'] - self.steps + 1):
                     emb_batch, mask_batch, price_batch, gt_batch = self.get_batch(cur_offset)
+                    
+                    # Move data to device
                     emb_batch = torch.FloatTensor(emb_batch).to(self.device)
                     mask_batch = torch.FloatTensor(mask_batch).to(self.device)
                     price_batch = torch.FloatTensor(price_batch).to(self.device)
                     gt_batch = torch.FloatTensor(gt_batch).to(self.device)
+                    
                     output_test = model(emb_batch, hyp_input)
-                    cur_loss, cur_reg_loss, cur_rank_loss, cur_rr = trr_loss_mse_rank(output_test, 
-                                                                                        price_batch, gt_batch, 
-                                                                                        mask_batch, self.parameters['alpha'], 
-                                                                                        self.batch_size)
+                    
+                    cur_loss, cur_reg_loss, cur_rank_loss, cur_rr = trr_loss_mse_rank(
+                        output_test, 
+                        price_batch, 
+                        gt_batch, 
+                        mask_batch, 
+                        self.parameters['alpha'], 
+                        self.batch_size
+                    )
+                    
                     cur_rr = cur_rr.detach().cpu().numpy().reshape((1026, 1))
                     test_loss += cur_loss.detach().cpu().item()
                     test_reg_loss += cur_reg_loss.detach().cpu().item()
@@ -212,6 +244,8 @@ class ReRaLSTM:
                       test_rank_loss / (self.trade_dates - self.test_index))
                 cur_test_perf = evaluate(cur_test_pred, cur_test_gt, cur_test_mask)
                 print('\t Test performance:', cur_test_perf)
+
+
 
     def update_model(self, parameters):
         for name, value in parameters.items():
