@@ -77,7 +77,7 @@ class HGAT(torch.nn.Module):
         context, query = self.grup(price_input)
         query = query.reshape(1026, 1, 32).to('cuda')
         output, weights = self.attention(query, context)
-        output = output.reshape((1026, 32))        
+        output = output.reshape((1026, 32)).to('cuda')        
         num_edges = e.max().item() + 1
         dummy_edge_attr = torch.ones(num_edges, 32, device='cuda') # Ensure tensor is on the correct device
         x = F.leaky_relu(self.hatt1(output, e, hyperedge_attr=dummy_edge_attr), 0.2)
