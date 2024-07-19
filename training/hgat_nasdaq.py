@@ -82,7 +82,7 @@ class HGAT(torch.nn.Module):
         output, weights = self.attention(query, context)
         output = output.reshape((1026, 32))        
         num_edges = e.max().item() + 1
-        dummy_edge_attr = torch.ones(num_edges, 32).to('cuda')  # Ensure tensor is on the correct device
+        dummy_edge_attr = torch.ones(num_edges, 32, device='cuda') # Ensure tensor is on the correct device
         x = F.leaky_relu(self.hatt1(output, e, hyperedge_attr=dummy_edge_attr), 0.2)
         x = F.leaky_relu(self.hatt2(x, e, hyperedge_attr=dummy_edge_attr), 0.2)
         return F.leaky_relu(self.linear(x))
