@@ -72,11 +72,13 @@ class HGAT(torch.nn.Module):
         self.hatt1 = nn.HypergraphConv(32, 32, use_attention=True, heads=4, concat=False, negative_slope=0.2, dropout=0.5, bias=True)
         self.hatt2 = nn.HypergraphConv(32, 32, use_attention=True, heads=1, concat=False, negative_slope=0.2, dropout=0.5, bias=True)
         self.liear = torch.nn.Linear(32,1)
-    def forward(self,price_input,e):
-        context,query  = self.grup(price_input)
-        query = query.reshape(1026,1,32)
+    def forward(self, price_input, e):
+        context, query = self.grup(price_input)
+        query = query.reshape(1026, 1, 32)
         output, weights = self.attention(query, context)
-        output = output.reshape((1026,32))
-        x = F.leaky_relu(self.hatt1(output,e), 0.2)
-        x = F.leaky_relu(self.hatt2(x,e), 0.2)
+        output = output.reshape((1026, 32))        
+        num_edges = e.max().item() + 1  # Assuming e contains edge indices
+        dummy_edge_attr = torch.ones(num_edges, 32)  # Create dummy attributes
+        x = F.leaky_relu(self.hatt1(output, e, hyperedge_attr=dummy_edge_attr), 0.2)
+        x = F.leaky_relu(self.hatt2(x, e, hyperedge_attr=dummy_edge_attr), 0.2)
         return F.leaky_relu(self.liear(x))

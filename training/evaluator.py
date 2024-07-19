@@ -58,6 +58,6 @@ def evaluate(prediction, ground_truth, mask, report=False):
         real_ret_rat_top5_gt /= 5
 
     performance['btl5'] = bt_long5 - 1
-    sharpe_li = np.array(sharpe_li)
+    sharpe_li = np.array(sharpe_li5)
     performance['sharpe5'] = (np.mean(sharpe_li5)/np.std(sharpe_li5))*15.87 #To annualize
     return performance
