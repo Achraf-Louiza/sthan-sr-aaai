@@ -57,7 +57,7 @@ class Attention(torch.nn.Module):
 class gru(torch.nn.Module):
     def __init__(self, input_size, hidden_size):
         super(gru, self).__init__()
-        self.gru1 = torch.nn.GRU(input_size = input_size, hidden_size=hidden_size, batch_first=True)
+        self.gru1 = torch.nn.GRU(input_size = input_size, hidden_size=hidden_size, batch_first=True).to('cuda')
     def forward(self, inputs):
         full, last  = self.gru1(inputs)
         return full,last

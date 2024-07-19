@@ -123,7 +123,6 @@ class ReRaLSTM:
             device_name = '/cpu:0'
         print('device name:', device_name)
         model = HGAT(self.batch_size).to(device)
-
         for p in model.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
