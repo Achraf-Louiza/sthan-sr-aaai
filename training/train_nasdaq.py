@@ -228,10 +228,10 @@ def train(self):
                     self.batch_size
                 )
                 
-                cur_rr = cur_rr.detach().cpu().numpy().reshape((1026, 1))
-                test_loss += cur_loss.detach().cpu().item()
-                test_reg_loss += cur_reg_loss.detach().cpu().item()
-                test_rank_loss += cur_rank_loss.detach().cpu().item()
+                cur_rr = cur_rr.detach().gpu().numpy().reshape((1026, 1))
+                test_loss += cur_loss.detach().gpu().item()
+                test_reg_loss += cur_reg_loss.detach().gpu().item()
+                test_rank_loss += cur_rank_loss.detach().gpu().item()
                 cur_test_pred[:, cur_offset - (self.test_index - self.parameters['seq'] - self.steps + 1)] = \
                     copy.copy(cur_rr[:, 0])
                 cur_test_gt[:, cur_offset - (self.test_index - self.parameters['seq'] - self.steps + 1)] = \

@@ -64,8 +64,8 @@ class HGAT(torch.nn.Module):
     def __init__(self, tickers):
         super(HGAT, self).__init__()
         self.tickers = tickers
-        self.grup = gru(5, 32)
-        self.attention = Attention(32)
+        self.grup = gru(5, 32).to('cuda')
+        self.attention = Attention(32).to('cuda')
         self.hatt1 = nn.HypergraphConv(32, 32, use_attention=True, heads=4, concat=False, negative_slope=0.2, dropout=0.5, bias=True).to('cuda')
         self.hatt2 = nn.HypergraphConv(32, 32, use_attention=True, heads=1, concat=False, negative_slope=0.2, dropout=0.5, bias=True).to('cuda')
         self.linear = torch.nn.Linear(32, 1).to('cuda')
