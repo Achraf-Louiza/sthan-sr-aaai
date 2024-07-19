@@ -78,7 +78,7 @@ class HGAT(torch.nn.Module):
         output, weights = self.attention(query, context)
         output = output.reshape((1026, 32))        
         num_edges = e.max().item() + 1  # Assuming e contains edge indices
-        dummy_edge_attr = torch.ones(num_edges, 32)  # Create dummy attributes
+        dummy_edge_attr = torch.ones(num_edges, 32).to('cuda') # Create dummy attributes
         x = F.leaky_relu(self.hatt1(output, e, hyperedge_attr=dummy_edge_attr), 0.2)
         x = F.leaky_relu(self.hatt2(x, e, hyperedge_attr=dummy_edge_attr), 0.2)
         return F.leaky_relu(self.liear(x))
