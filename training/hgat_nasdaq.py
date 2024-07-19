@@ -62,23 +62,28 @@ class gru(torch.nn.Module):
         full, last  = self.gru1(inputs)
         return full,last
 
-
 class HGAT(torch.nn.Module):
     def __init__(self, tickers):
         super(HGAT, self).__init__()
         self.tickers = tickers
-        self.grup = gru(5,32)  #or lstm
+        self.grup = gru(5,32)
         self.attention = Attention(32)
         self.hatt1 = nn.HypergraphConv(32, 32, use_attention=True, heads=4, concat=False, negative_slope=0.2, dropout=0.5, bias=True)
         self.hatt2 = nn.HypergraphConv(32, 32, use_attention=True, heads=1, concat=False, negative_slope=0.2, dropout=0.5, bias=True)
-        self.liear = torch.nn.Linear(32,1)
+        self.linear = torch.nn.Linear(32, 1)
+        
     def forward(self, price_input, e):
+        # Ensure tensors are on the correct device
+        price_input = price_input.to('cuda')
+        e = e.to('cuda')
+        
         context, query = self.grup(price_input)
-        query = query.reshape(1026, 1, 32)
+        query = query.reshape(1026, 1, 32).to('cuda')
         output, weights = self.attention(query, context)
         output = output.reshape((1026, 32))        
-        num_edges = e.max().item() + 1  # Assuming e contains edge indices
-        dummy_edge_attr = torch.ones(num_edges, 32).to('cuda') # Create dummy attributes
+        num_edges = e.max().item() + 1
+        dummy_edge_attr = torch.ones(num_edges, 32).to('cuda')  # Ensure tensor is on the correct device
         x = F.leaky_relu(self.hatt1(output, e, hyperedge_attr=dummy_edge_attr), 0.2)
         x = F.leaky_relu(self.hatt2(x, e, hyperedge_attr=dummy_edge_attr), 0.2)
-        return F.leaky_relu(self.liear(x))
+        return F.leaky_relu(self.linear(x))
+

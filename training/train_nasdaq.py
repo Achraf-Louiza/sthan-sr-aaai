@@ -136,6 +136,7 @@ class ReRaLSTM:
         incidence_edge = utils.from_scipy_sparse_matrix(inci_sparse)
         hyp_input = incidence_edge[0].to(device)
         batch_offsets = np.arange(start=0, stop=self.valid_index, dtype=int)
+        hyp_input = hyp_input.to(device) 
         for i in range(self.epochs):
             t1 = time()
             np.random.shuffle(batch_offsets)
@@ -146,7 +147,10 @@ class ReRaLSTM:
             for j in tqdm(range(self.valid_index - self.parameters['seq'] -self.steps +1)):
                 emb_batch, mask_batch, price_batch, gt_batch = self.get_batch(
                     batch_offsets[j])
-                
+                emb_batch = torch.FloatTensor(emb_batch).to(device)
+                price_batch = torch.FloatTensor(price_batch).to(device)
+                gt_batch = torch.FloatTensor(gt_batch).to(device)
+                mask_batch = torch.FloatTensor(mask_batch).to(device)
                 optimizer_hgat.zero_grad()
                 output = model(torch.FloatTensor(emb_batch).to(device), hyp_input)
                 cur_loss, cur_reg_loss, cur_rank_loss, curr_rr_train = trr_loss_mse_rank(output.reshape((1026,1)), torch.FloatTensor(price_batch).to(device), 
