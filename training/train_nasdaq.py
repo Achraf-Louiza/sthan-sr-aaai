@@ -101,7 +101,8 @@ class ReRaLSTM:
 
 def train(self):
     global df
-    model = HGAT(self.batch_size).to(self.device)  # Ensure model is on the correct device
+    model = HGAT(self.batch_size)
+    model.to(self.device)# Ensure model is on the correct device
     for p in model.parameters():
         if p.dim() > 1:
             nn.init.xavier_uniform_(p)
