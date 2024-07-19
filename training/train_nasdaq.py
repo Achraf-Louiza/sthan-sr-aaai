@@ -102,7 +102,6 @@ class ReRaLSTM:
 def train(self):
     global df
     model = HGAT(self.batch_size)
-    model.to(self.device)# Ensure model is on the correct device
     for p in model.parameters():
         if p.dim() > 1:
             nn.init.xavier_uniform_(p)
@@ -113,9 +112,9 @@ def train(self):
     inci_mat = np.load('nasdaq.npy')
     inci_sparse = sparse.coo_matrix(inci_mat)
     incidence_edge = utils.from_scipy_sparse_matrix(inci_sparse)
-    hyp_input = incidence_edge[0].to(self.device)
+    hyp_input = incidence_edge[0]
     batch_offsets = np.arange(start=0, stop=self.valid_index, dtype=int)
-    hyp_input = hyp_input.to(self.device)
+    hyp_input = hyp_input
 
     for i in range(self.epochs):
         t1 = time()
@@ -126,10 +125,10 @@ def train(self):
             emb_batch, mask_batch, price_batch, gt_batch = self.get_batch(batch_offsets[j])
             
             # Move data to device
-            emb_batch = torch.FloatTensor(emb_batch).to(self.device)
-            price_batch = torch.FloatTensor(price_batch).to(self.device)
-            gt_batch = torch.FloatTensor(gt_batch).to(self.device)
-            mask_batch = torch.FloatTensor(mask_batch).to(self.device)
+            emb_batch = torch.FloatTensor(emb_batch)
+            price_batch = torch.FloatTensor(price_batch)
+            gt_batch = torch.FloatTensor(gt_batch)
+            mask_batch = torch.FloatTensor(mask_batch)
             
             optimizer_hgat.zero_grad()
             
@@ -169,10 +168,10 @@ def train(self):
                 emb_batch, mask_batch, price_batch, gt_batch = self.get_batch(cur_offset)
                 
                 # Move data to device
-                emb_batch = torch.FloatTensor(emb_batch).to(self.device)
-                mask_batch = torch.FloatTensor(mask_batch).to(self.device)
-                price_batch = torch.FloatTensor(price_batch).to(self.device)
-                gt_batch = torch.FloatTensor(gt_batch).to(self.device)
+                emb_batch = torch.FloatTensor(emb_batch)
+                mask_batch = torch.FloatTensor(mask_batch)
+                price_batch = torch.FloatTensor(price_batch)
+                gt_batch = torch.FloatTensor(gt_batch)
                 
                 output_val = model(emb_batch, hyp_input)
                 
@@ -213,10 +212,10 @@ def train(self):
                 emb_batch, mask_batch, price_batch, gt_batch = self.get_batch(cur_offset)
                 
                 # Move data to device
-                emb_batch = torch.FloatTensor(emb_batch).to(self.device)
-                mask_batch = torch.FloatTensor(mask_batch).to(self.device)
-                price_batch = torch.FloatTensor(price_batch).to(self.device)
-                gt_batch = torch.FloatTensor(gt_batch).to(self.device)
+                emb_batch = torch.FloatTensor(emb_batch)
+                mask_batch = torch.FloatTensor(mask_batch)
+                price_batch = torch.FloatTensor(price_batch)
+                gt_batch = torch.FloatTensor(gt_batch)
                 
                 output_test = model(emb_batch, hyp_input)
                 
