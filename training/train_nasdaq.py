@@ -118,7 +118,7 @@ class ReRaLSTM:
     def train(self):
         global df
         if self.gpu == True:
-            device_name = '/gpu:0'
+            device_name = 'cuda'
         else:
             device_name = '/cpu:0'
         print('device name:', device_name)
