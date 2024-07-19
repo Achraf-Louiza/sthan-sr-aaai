@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 import os
 import random
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 from time import time
 from tqdm import tqdm
 try:
@@ -20,8 +21,8 @@ except ImportError:
             alpha = ops.convert_to_tensor(alpha, name="alpha")
             return math_ops.maximum(alpha * features, features)
 
-from load_data_nasdaq import load_EOD_data, load_relation_data
-from evaluator import evaluate
+from training.load_data_nasdaq import load_EOD_data, load_relation_data
+from training.evaluator import evaluate
 
 seed = 123456789
 np.random.seed(seed)
@@ -30,7 +31,7 @@ tf.set_random_seed(seed)
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from hgat_nasdaq import HGAT 
+from training.hgat_nasdaq import HGAT 
 from scipy import sparse
 from torch_geometric import utils
 import torch.optim as optim
@@ -313,7 +314,7 @@ if __name__ == '__main__':
 
     
     parameters = {'seq': int(args.l), 'unit': int(args.u), 'lr': float(args.r),
-                    'alpha': float(alpha_arr[j])}
+                    'alpha': float(args.a)}
 
     RR_LSTM = ReRaLSTM(
         data_path=args.p,
